@@ -1,25 +1,18 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 import React from 'react';
-import { render } from 'react-dom';
-import Highcharts from 'highcharts';
+import Highcharts, { color } from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import highchartsMap from 'highcharts/modules/map';
-import proj4 from 'proj4';
-import mapDataIE from '@highcharts/map-collection/countries/ie/ie-all.geo.json';
+import mapDataUS from '@highcharts/map-collection/countries/us/custom/us-small.geo.json';
+
 highchartsMap(Highcharts); // Initialize the map module
-
-// tidbit of code below needed for map. IDK why but that's what the example said
-
-if (typeof window !== 'undefined') {
-  window.proj4 = window.proj4 || proj4;
-}
 
 function App() {
   const [status, setStatus] = useState('idle');
   const [jsonData, setJsonData] = useState();
+  const [mapData, setMapData] = useState([]);
 
-  // -------------------------------- Fetching data code below
   // fetchItems gets data from google API and sets the state of jsonData
   async function fetchItems() {
     setStatus('loading');
@@ -33,7 +26,7 @@ function App() {
     );
 
     const textData = await response.text();
-
+    // pretending like i know how to handle errors
     if (!textData.error) {
       setStatus('success');
       const startIndex = textData.indexOf('{');
@@ -53,11 +46,18 @@ function App() {
     fetchItems();
   }, []);
 
+  // data processing task:
+  // The mapOptions object below has a bunch of info which highchart needs to
+  // render the map. We need to get the jsonData we fetched above into the right format so that
+  // we can replace the placeholder data in the series array below. States
+  // will need to be grouped by color.
+
   // -------------------------------- Map code below
+  //IDK what a lot of these options do yet- just copy/pasted from examples
 
   const mapOptions = {
     chart: {
-      map: 'countries/ie/ie-all',
+      map: mapDataUS,
     },
     title: {
       text: 'Map Demo',
@@ -73,32 +73,49 @@ function App() {
       pointFormat:
         '<b>{point.freq}</b><br><b>{point.keyword}</b>                      <br>lat: {point.lat}, lon: {point.lon}',
     },
+    plotOptions: {
+      map: {
+        allAreas: false,
+        joinBy: ['hc-a2', 'code'],
+        dataLabels: {
+          enabled: true,
+          color: '#FFFFFF',
+          style: {
+            fontWeight: 'bold',
+          },
+          // Only show dataLabels for areas with high label rank
+          format:
+            '{#if (lt point.properties.labelrank 5)}' +
+            '{point.properties.hc-a2}' +
+            '{/if}',
+        },
+      },
+    },
+    // The array below is the same thing as:
+    // [
+    //   {
+    //     name: 'RED',
+    //     data: [
+    //       { code: 'VA' },
+    //       { code: 'NC' }
+    //     ]
+    //   }
+    //   {
+    //     name: 'BLUE',
+    //     data: [
+    //       { code: 'WA' },
+    //       { code: 'OR' }
+    //     ]
+    //   }
+    // ]
     series: [
       {
-        // Use the gb-all map with no data as a basemap
-        name: 'Basemap',
-        mapData: mapDataIE,
-        borderColor: '#A0A0A0',
-        nullColor: 'rgba(200, 200, 200, 0.3)',
-        showInLegend: false,
+        name: 'RED',
+        data: ['VA', 'NC'].map((code) => ({ code })),
       },
       {
-        // Specify points using lat/lon
-        type: 'mapbubble',
-        name: 'Cities',
-        color: '#4169E1',
-        data: [
-          { z: 10, keyword: 'Galway', lat: 53.27, lon: -9.25 },
-          { z: 4, keyword: 'Dublin', lat: 53.27, lon: -6.25 },
-        ],
-        cursor: 'pointer',
-        point: {
-          events: {
-            click: function () {
-              console.log(this.keyword);
-            },
-          },
-        },
+        name: 'BLUE',
+        data: ['WA', 'OR'].map((code) => ({ code })),
       },
     ],
   };
@@ -117,7 +134,6 @@ function App() {
             highcharts={Highcharts}
             options={mapOptions}
           />
-          ;
         </div>
       )}
     </>
