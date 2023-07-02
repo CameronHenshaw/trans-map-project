@@ -22,7 +22,7 @@ function App() {
       {
         method: 'GET',
         majorDimension: 'ROWS',
-      },
+      }
     );
 
     const textData = await response.text();
@@ -32,7 +32,7 @@ function App() {
       const startIndex = textData.indexOf('{');
       const endIndex = textData.lastIndexOf('}') + 1;
       const data = JSON.parse(textData.slice(startIndex, endIndex));
-      console.log(data);
+      console.log(data.table.rows);
       setJsonData(data);
     } else {
       setStatus('error');
