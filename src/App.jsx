@@ -47,6 +47,7 @@ function App() {
   useEffect(() => {
     console.log('running data fetching');
     fetchItems();
+    parseData(jsonData);
   }, []);
 
   // data processing task:
@@ -88,7 +89,6 @@ function App() {
   // }
 
   const parseData = async (data) => {
-    await data;
     const rows = data.table.rows;
     rows.shift(); //removes header row
 
@@ -118,7 +118,7 @@ function App() {
       };
     });
 
-    mapOptions.series = result;
+    setMapData(result);
   };
 
   const mapOptions = {
@@ -174,19 +174,18 @@ function App() {
     //     ]
     //   }
     // ]
-    series: [
-      {
-        name: 'RED',
-        data: ['VA', 'NC'].map((code) => ({ code })),
-      },
-      {
-        name: 'BLUE',
-        data: ['WA', 'OR'].map((code) => ({ code })),
-      },
-    ],
+    series: mapData,
+    //[
+    //   {
+    //     name: 'RED',
+    //     data: ['VA', 'NC'].map((code) => ({ code })),
+    //   },
+    //   {
+    //     name: 'BLUE',
+    //     data: ['WA', 'OR'].map((code) => ({ code })),
+    //   },
+    // ],
   };
-
-  parseData(jsonData);
 
   return (
     <>
