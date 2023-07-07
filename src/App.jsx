@@ -32,7 +32,6 @@ function App() {
       const startIndex = textData.indexOf('{');
       const endIndex = textData.lastIndexOf('}') + 1;
       const data = JSON.parse(textData.slice(startIndex, endIndex));
-      // console.log(data);
       setJsonData(data);
     } else {
       setStatus('error');
@@ -47,7 +46,6 @@ function App() {
   useEffect(() => {
     console.log('running data fetching');
     fetchItems();
-    parseData(jsonData);
   }, []);
 
   // data processing task:
@@ -120,6 +118,13 @@ function App() {
 
     setMapData(result);
   };
+
+  //runs when jsonData is ready
+  useEffect(() => {
+    if (status === 'success') {
+      parseData(jsonData);
+    }
+  }, [jsonData]);
 
   const mapOptions = {
     chart: {
