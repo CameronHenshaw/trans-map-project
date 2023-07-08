@@ -22,7 +22,7 @@ function App() {
       {
         method: 'GET',
         majorDimension: 'ROWS',
-      },
+      }
     );
 
     const textData = await response.text();
@@ -32,7 +32,6 @@ function App() {
       const startIndex = textData.indexOf('{');
       const endIndex = textData.lastIndexOf('}') + 1;
       const data = JSON.parse(textData.slice(startIndex, endIndex));
-      console.log(data);
       setJsonData(data);
     } else {
       setStatus('error');
@@ -41,6 +40,9 @@ function App() {
 
   // useEffect makes sure fetchItems() runs upon initial render
   // except it runs twice and IDK why lol
+
+  // I think Vite runs React Strict mode by default? Will log twice
+  // in dev environment but nothing to be concerned about :)
   useEffect(() => {
     console.log('running data fetching');
     fetchItems();
@@ -54,6 +56,75 @@ function App() {
 
   // -------------------------------- Map code below
   //IDK what a lot of these options do yet- just copy/pasted from examples
+
+  // [
+  //   {
+  //     code: 'DARK RED',
+  //     states: ['AK', 'FL', 'MI']
+  //   }
+  // ]
+
+  // [
+  //   {
+  //     name: 'RED',
+  //     data: [
+  //       { code: 'VA' },
+  //       { code: 'NC' }
+  //     ]
+  //   }
+  //   {
+  //     name: 'BLUE',
+  //     data: [
+  //       { code: 'WA' },
+  //       { code: 'OR' }
+  //     ]
+  //   }
+  // ]
+
+  // {
+  //   'DARK RED': {'AK' => true, 'FL' => true},
+  //   'BLUE': {'WA' => true, 'OR' => true},
+  // }
+
+  const parseData = async (data) => {
+    const rows = data.table.rows;
+    rows.shift(); //removes header row
+
+    const stateLabels = {};
+
+    const colorStates = rows.reduce(
+      (accum, { c: [{ v: _stateName }, { v: stateLabel }, { v: color }] }) => {
+        const stateAbbrev = stateLabel.slice(0, 2); //idk if the emojis for high
+        //danger/sanctuaries are staying but this makes the abbrevs safe to use
+        stateLabels[stateAbbrev] = stateLabel;
+
+        if (accum[color]) {
+          accum[color].add(stateAbbrev);
+        } else {
+          accum[color] = new Set([stateAbbrev]);
+        }
+
+        return accum;
+      },
+      {}
+    );
+
+    const result = Object.entries(colorStates).map(([color, states]) => {
+      return {
+        name: color,
+        data: Array.from(states).map((code) => ({ code })),
+      };
+    });
+
+    setMapData(result);
+  };
+
+  //runs when jsonData is ready
+  useEffect(() => {
+    if (status === 'success') {
+      parseData(jsonData);
+    }
+  }, [jsonData]);
 
   const mapOptions = {
     chart: {
@@ -108,16 +179,17 @@ function App() {
     //     ]
     //   }
     // ]
-    series: [
-      {
-        name: 'RED',
-        data: ['VA', 'NC'].map((code) => ({ code })),
-      },
-      {
-        name: 'BLUE',
-        data: ['WA', 'OR'].map((code) => ({ code })),
-      },
-    ],
+    series: mapData,
+    //[
+    //   {
+    //     name: 'RED',
+    //     data: ['VA', 'NC'].map((code) => ({ code })),
+    //   },
+    //   {
+    //     name: 'BLUE',
+    //     data: ['WA', 'OR'].map((code) => ({ code })),
+    //   },
+    // ],
   };
 
   return (
