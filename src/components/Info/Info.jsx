@@ -1,8 +1,8 @@
-function Info() {
+function Info(props) {
   return (
     <div>
       <h2> Information about Legislation in 'state'</h2>
-      <p> This is where a bunch of nice info will show up.</p>
+      <p> {props.selectedStateInfo}</p>
     </div>
   );
 }
