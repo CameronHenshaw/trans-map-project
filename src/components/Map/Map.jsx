@@ -13,6 +13,7 @@ function Map() {
   const [status, setStatus] = useState('idle');
   const [jsonData, setJsonData] = useState();
   const [mapData, setMapData] = useState([]);
+  const [selectedState, setSelectedState] = useState('');
 
   // fetchItems gets data from google API and sets the state of jsonData
   async function fetchItems() {
@@ -23,7 +24,7 @@ function Map() {
       {
         method: 'GET',
         majorDimension: 'ROWS',
-      },
+      }
     );
 
     const textData = await response.text();
@@ -64,7 +65,7 @@ function Map() {
 
         return accum;
       },
-      {},
+      {}
     );
 
     const result = Object.entries(colorStates).map(([color, states]) => {
@@ -101,6 +102,14 @@ function Map() {
     title: {
       text: 'Map of US States Showing Impact of Legislation on Transgender People',
     },
+    accessibility: {
+      series: {
+        descriptionFormat: '{series.name}',
+      },
+      point: {
+        valueDescriptionFormat: '{point.name}.',
+      },
+    },
     credits: {
       enabled: false,
     },
@@ -109,8 +118,7 @@ function Map() {
     },
     tooltip: {
       headerFormat: '',
-      pointFormat:
-        '<b>{point.freq}</b><br><b>{point.keyword}</b>                      <br>lat: {point.lat}, lon: {point.lon}',
+      pointFormat: '{point.name}',
     },
     plotOptions: {
       map: {
@@ -124,14 +132,27 @@ function Map() {
           },
           // Only show dataLabels for areas with high label rank
           format:
-            '{#if (lt point.properties.labelrank 5)}' +
+            '{#if (lt point.properties.labelrank 10)}' +
             '{point.properties.hc-a2}' +
             '{/if}',
+        },
+      },
+      series: {
+        point: {
+          events: {
+            click: function () {
+              setSelectedState(this.name);
+            },
+          },
         },
       },
     },
     series: mapData,
   };
+
+  useEffect(() => {
+    console.log(selectedState);
+  }, [selectedState]);
 
   return (
     <div className={mapstyles.mappart}>
