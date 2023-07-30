@@ -9,11 +9,14 @@ import mapstyles from './mapstyles.module.css';
 
 highchartsMap(Highcharts); // Initialize the map module
 
-function Map() {
+function Map({ updateSelectedStateInfo }) {
   const [status, setStatus] = useState('idle');
   const [jsonData, setJsonData] = useState();
   const [mapData, setMapData] = useState([]);
   const [selectedState, setSelectedState] = useState('');
+  const [stateInfo, setStateInfo] = useState(
+    'This is the default data for the info section',
+  );
 
   // fetchItems gets data from google API and sets the state of jsonData
   async function fetchItems() {
@@ -24,7 +27,7 @@ function Map() {
       {
         method: 'GET',
         majorDimension: 'ROWS',
-      }
+      },
     );
 
     const textData = await response.text();
@@ -48,7 +51,6 @@ function Map() {
   const parseData = async (data) => {
     const rows = data.table.rows;
     rows.shift(); //removes header row
-
     const stateLabels = {};
 
     const colorStates = rows.reduce(
@@ -65,9 +67,9 @@ function Map() {
 
         return accum;
       },
-      {}
+      {},
     );
-
+    console.log(colorStates);
     const result = Object.entries(colorStates).map(([color, states]) => {
       return {
         name: color,
@@ -81,10 +83,30 @@ function Map() {
     setMapData(reorderedData);
   };
 
+  const parseStateInfo = async (data) => {
+    const rows = data.table.rows;
+
+    const stateInfo = rows.reduce(
+      (
+        accum,
+        { c: [{ v: stateName }, { v: stateLabel }, { v: color }, { v: info }] },
+      ) => {
+        accum[stateName] = info;
+        return accum;
+      },
+      {},
+    );
+
+    setStateInfo(stateInfo);
+  };
+
   //runs when jsonData is ready
   useEffect(() => {
     if (status === 'success') {
       parseData(jsonData);
+      console.log(jsonData);
+      parseStateInfo(jsonData);
+      console.log(jsonData);
     }
   }, [jsonData]);
 
@@ -151,7 +173,9 @@ function Map() {
   };
 
   useEffect(() => {
-    console.log(selectedState);
+    // console.log(selectedState);
+    // console.log(stateInfo);
+    updateSelectedStateInfo(stateInfo[selectedState]);
   }, [selectedState]);
 
   return (
