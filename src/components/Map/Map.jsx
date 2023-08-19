@@ -7,6 +7,10 @@ import highchartsMap from 'highcharts/modules/map';
 import mapDataUS from '@highcharts/map-collection/countries/us/custom/us-small.geo.json';
 import mapstyles from './mapstyles.module.css';
 
+import HighchartsAccessibility from 'highcharts/modules/accessibility';
+
+HighchartsAccessibility(Highcharts);
+
 highchartsMap(Highcharts); // Initialize the map module
 
 function Map({ updateSelectedStateInfo }) {
@@ -14,9 +18,7 @@ function Map({ updateSelectedStateInfo }) {
   const [jsonData, setJsonData] = useState();
   const [mapData, setMapData] = useState([]);
   const [selectedState, setSelectedState] = useState('');
-  const [stateInfo, setStateInfo] = useState(
-    'This is the default data for the info section',
-  );
+  const [stateInfo, setStateInfo] = useState('');
 
   // fetchItems gets data from google API and sets the state of jsonData
   async function fetchItems() {
@@ -69,23 +71,36 @@ function Map({ updateSelectedStateInfo }) {
       },
       {},
     );
-    console.log(colorStates);
-    const result = Object.entries(colorStates).map(([color, states]) => {
+
+    const renamedColors = {
+      'Dark Red': 'Worst Active Anti-trans Laws',
+      'Light Red': 'Moderate Risk within Two Years',
+      Blue: 'Low Risk within Two Years',
+      'Dark Blue': 'Safest State with protections',
+      Red: 'High Risk within Two Years',
+    };
+
+    const renamedColorStates = {};
+    for (const color in colorStates) {
+      renamedColorStates[renamedColors[color]] = colorStates[color];
+    }
+
+    const result = Object.entries(renamedColorStates).map(([color, states]) => {
       return {
         name: color,
         data: Array.from(states).map((code) => ({ code })),
       };
     });
     console.log(result);
+    // This code reorders things to that the categories show nicely in the legend
     const desiredOrder = [0, 4, 1, 2, 3];
     const reorderedData = desiredOrder.map((index) => result[index]);
-
+    console.log(reorderedData);
     setMapData(reorderedData);
   };
 
   const parseStateInfo = async (data) => {
     const rows = data.table.rows;
-
     const stateInfo = rows.reduce(
       (
         accum,
@@ -104,15 +119,14 @@ function Map({ updateSelectedStateInfo }) {
   useEffect(() => {
     if (status === 'success') {
       parseData(jsonData);
-      console.log(jsonData);
       parseStateInfo(jsonData);
-      console.log(jsonData);
     }
   }, [jsonData]);
 
   const mapOptions = {
     chart: {
       map: mapDataUS,
+      animation: false,
     },
     colors: [
       'rgba(89, 0, 0, 1)',
@@ -122,14 +136,15 @@ function Map({ updateSelectedStateInfo }) {
       'rgba(12, 12, 132, 1)',
     ],
     title: {
-      text: 'Map of US States Showing Impact of Legislation on Transgender People',
+      text: 'Map of US States Showing Risk of Anti-Trans Legislation',
     },
     accessibility: {
+      enabled: true,
       series: {
-        descriptionFormat: '{series.name}',
+        descriptionFormat: '',
       },
       point: {
-        valueDescriptionFormat: '{point.name}.',
+        valueDescriptionFormat: '{point.name}',
       },
     },
     credits: {
@@ -140,7 +155,7 @@ function Map({ updateSelectedStateInfo }) {
     },
     tooltip: {
       headerFormat: '',
-      pointFormat: '{point.name}',
+      pointFormat: '{point.name}: <b>{series.name}</b>',
     },
     plotOptions: {
       map: {
@@ -159,7 +174,13 @@ function Map({ updateSelectedStateInfo }) {
             '{/if}',
         },
       },
+
       series: {
+        events: {
+          legendItemClick: function () {
+            return false;
+          },
+        },
         point: {
           events: {
             click: function () {
@@ -173,9 +194,10 @@ function Map({ updateSelectedStateInfo }) {
   };
 
   useEffect(() => {
-    // console.log(selectedState);
-    // console.log(stateInfo);
-    updateSelectedStateInfo(stateInfo[selectedState]);
+    updateSelectedStateInfo({
+      statename: selectedState,
+      text: stateInfo[selectedState],
+    });
   }, [selectedState]);
 
   return (
@@ -186,14 +208,15 @@ function Map({ updateSelectedStateInfo }) {
       )}
       {status === 'success' && (
         <div>
+          <p>
+            Click on a state on the map below or choose one from the drop down
+            menu to show details about legislative activity.
+          </p>
           <HighchartsReact
             constructorType={'mapChart'}
             highcharts={Highcharts}
             options={mapOptions}
           />
-          <p>
-            Click on a state above to show details about legislative activity.
-          </p>
         </div>
       )}
     </div>

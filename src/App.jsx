@@ -7,21 +7,27 @@ import styles from './styles.module.css';
 
 function App() {
   const [status, setStatus] = useState('idle');
-  const [selectedStateInfo, setSelectedStateInfo] = useState(
-    'This is the default info that will show',
-  );
+  const [selectedStateInfo, setSelectedStateInfo] = useState({
+    statename: 'default',
+    text: 'Choose a state to learn more.',
+  });
 
   const updateSelectedStateInfo = (newValue) => {
     setSelectedStateInfo(newValue);
   };
 
   useEffect(() => {
-    console.log(selectedStateInfo);
-  }, [selectedStateInfo]);
+    // This will update the state after the component has mounted,
+    // causing a re-render with the default value.
+    setSelectedStateInfo({
+      statename: 'default',
+      text: 'Choose a state to learn more.',
+    });
+  }, []);
 
   return (
     <section className={styles.main}>
-      <h1>Legislation Affecting Trangender People</h1>
+      <h1>Legislation Affecting Transgender People</h1>
       <Map updateSelectedStateInfo={updateSelectedStateInfo} />
       <Info selectedStateInfo={selectedStateInfo} />
     </section>
